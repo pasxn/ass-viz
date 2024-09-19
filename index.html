@@ -173,7 +173,7 @@
                         Founded: values[4],
                         Description: values[5]
                     };
-                });
+                }).filter(startup => startup.Company); // Filter out empty rows
             }
 
             // Populate filter dropdowns
