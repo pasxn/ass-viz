@@ -141,9 +141,14 @@
             function parseCSV(data) {
                 const lines = data.split('\n');
                 const headers = lines[0].split(',');
-                return lines.slice(1).map(line => {
+                return lines.slice(1).map((line, index) => {
                     const values = line.split(',');
+                    // Skip empty rows
+                    if (values.some(value => value.trim() === '')) {
+                        return null;
+                    }
                     return {
+                        id: index + 1,
                         Company: values[0],
                         Website: values[1],
                         Technology: values[2],
@@ -151,7 +156,7 @@
                         Founded: values[4],
                         Description: values[5]
                     };
-                });
+                }).filter(entry => entry !== null); // Remove null entries
             }
 
             // Populate filter dropdowns
@@ -189,7 +194,7 @@
                     const startupElement = document.createElement('div');
                     startupElement.classList.add('startup');
                     startupElement.innerHTML = `
-                        <h3><a href="https://${startup.Website}" target="_blank">${startup.Company}</a></h3>
+                        <h3>${startup.id}. <a href="https://${startup.Website}" target="_blank">${startup.Company}</a></h3>
                         <p><strong>Technology:</strong> ${startup.Technology}</p>
                         <p><strong>Country:</strong> ${startup.Country}</p>
                         <p><strong>Founded:</strong> ${startup.Founded}</p>
