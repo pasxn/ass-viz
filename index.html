@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awesome Semiconductor Startups Visualization</title>
+    <link rel="icon" href="microchip.png" type="image/x-icon">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        p {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #search-bar {
+            width: 80%;
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .filters {
+            margin-bottom: 1rem;
+        }
+
+        .filters select {
+            padding: 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin: 0 0.5rem;
+        }
+
+        #startups-list {
+            width: 90%;
+            height: 50vh;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 1rem;
+        }
+
+        .startup {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .startup h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .startup p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Awesome Semiconductor Startups Visualization</h1>
+    <p>This is a simple tool written to visualize <a href="https://github.com/aolofsson/awesome-semiconductor-startups">awesome-semiconductor-startups</a> by <a href="https://www.linkedin.com/in/andreasolofsson/">Andreas Olofsson</a>.</p>
+
+    <input type="text" id="search-bar" placeholder="Search startups...">
+
+    <div class="filters">
+        <label for="technology-filter">Technology:</label>
+        <select id="technology-filter">
+            <option value="">All</option>
+        </select>
+
+        <label for="country-filter">Country:</label>
+        <select id="country-filter">
+            <option value="">All</option>
+        </select>
+
+        <label for="year-filter">Year Founded:</label>
+        <select id="year-filter">
+            <option value="">All</option>
+        </select>
+
+        <label for="sort-filter">Sort By Year:</label>
+        <select id="sort-filter">
+            <option value="desc">Most Recent</option>
+            <option value="asc">Oldest First</option>
+        </select>
+    </div>
+
+    <div id="startups-list"></div>
+
+    <footer>
+        Written with ♥ by <a href="https://www.linkedin.com/in/pasansperera/">Pasan</a>.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const csvUrl = 'https://raw.githubusercontent.com/aolofsson/awesome-semiconductor-startups/main/startups.csv';
+            const searchBar = document.getElementById('search-bar');
+            const technologyFilter = document.getElementById('technology-filter');
+            const countryFilter = document.getElementById('country-filter');
+            const yearFilter = document.getElementById('year-filter');
+            const sortFilter = document.getElementById('sort-filter');
+            const startupsList = document.getElementById('startups-list');
+
+            let startups = [];
+
+            // Fetch the CSV and parse it
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(data => {
+                    startups = parseCSV(data);
+                    renderStartups(startups);
+                    populateFilters(startups);
+                });
+
+            // CSV parsing function
+            function parseCSV(data) {
+                const lines = data.split('\n');
+                const headers = lines[0].split(',');
+                return lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    return {
+                        Company: values[0],
+                        Website: values[1],
+                        Technology: values[2],
+                        Country: values[3],
+                        Founded: values[4],
+                        Description: values[5]
+                    };
+                });
+            }
+
+            // Populate filter dropdowns
+            function populateFilters(startups) {
+                const technologies = [...new Set(startups.map(s => s.Technology))].sort();
+                const countries = [...new Set(startups.map(s => s.Country))].sort();
+                const years = [...new Set(startups.map(s => s.Founded))].sort((a, b) => b - a);
+
+                technologies.forEach(tech => {
+                    const option = document.createElement('option');
+                    option.value = tech;
+                    option.textContent = tech;
+                    technologyFilter.appendChild(option);
+                });
+
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    countryFilter.appendChild(option);
+                });
+
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                });
+            }
+
+            // Render the startups
+            function renderStartups(startups) {
+                startupsList.innerHTML = '';
+                startups.forEach(startup => {
+                    const startupElement = document.createElement('div');
+                    startupElement.classList.add('startup');
+                    startupElement.innerHTML = `
+                        <h3><a href="https://${startup.Website}" target="_blank">${startup.Company}</a></h3>
+                        <p><strong>Technology:</strong> ${startup.Technology}</p>
+                        <p><strong>Country:</strong> ${startup.Country}</p>
+                        <p><strong>Founded:</strong> ${startup.Founded}</p>
+                        <p>${startup.Description}</p>
+                    `;
+                    startupsList.appendChild(startupElement);
+                });
+            }
+
+            // Search, filter, and sort the startups
+            function applyFilters() {
+                const searchTerm = searchBar.value.toLowerCase();
+                const selectedTechnology = technologyFilter.value;
+                const selectedCountry = countryFilter.value;
+                const selectedYear = yearFilter.value;
+                const sortDirection = sortFilter.value;
+
+                let filteredStartups = startups.filter(startup => {
+                    const matchesSearch = startup.Company.toLowerCase().includes(searchTerm);
+                    const matchesTechnology = selectedTechnology ? startup.Technology === selectedTechnology : true;
+                    const matchesCountry = selectedCountry ? startup.Country === selectedCountry : true;
+                    const matchesYear = selectedYear ? startup.Founded === selectedYear : true;
+                    return matchesSearch && matchesTechnology && matchesCountry && matchesYear;
+                });
+
+                filteredStartups.sort((a, b) => {
+                    return sortDirection === 'asc' ? a.Founded - b.Founded : b.Founded - a.Founded;
+                });
+
+                renderStartups(filteredStartups);
+            }
+
+            // Event listeners for search, filter, and sort changes
+            searchBar.addEventListener('input', applyFilters);
+            technologyFilter.addEventListener('change', applyFilters);
+            countryFilter.addEventListener('change', applyFilters);
+            yearFilter.addEventListener('change', applyFilters);
+            sortFilter.addEventListener('change', applyFilters);
+        });
+    </script>
+</body>
+</html>
