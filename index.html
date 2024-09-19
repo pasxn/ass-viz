@@ -39,9 +39,13 @@
 
         .filters {
             margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .filters select {
+        .filters select, .filters button {
             padding: 0.5rem;
             border-radius: 5px;
             border: 1px solid #ccc;
@@ -50,11 +54,12 @@
 
         #startups-list {
             width: 90%;
-            height: 50vh;
+            height: 60vh;
             overflow-y: auto;
             background-color: white;
             border: 1px solid #ddd;
             padding: 1rem;
+            box-sizing: border-box;
         }
 
         .startup {
@@ -108,6 +113,8 @@
             <option value="desc">Most Recent</option>
             <option value="asc">Oldest First</option>
         </select>
+
+        <button id="reset-button">Reset</button>
     </div>
 
     <div id="startups-list"></div>
@@ -124,15 +131,18 @@
             const countryFilter = document.getElementById('country-filter');
             const yearFilter = document.getElementById('year-filter');
             const sortFilter = document.getElementById('sort-filter');
+            const resetButton = document.getElementById('reset-button');
             const startupsList = document.getElementById('startups-list');
 
             let startups = [];
+            let originalStartups = [];
 
             // Fetch the CSV and parse it
             fetch(csvUrl)
                 .then(response => response.text())
                 .then(data => {
                     startups = parseCSV(data);
+                    originalStartups = [...startups]; // Keep a copy of the original order
                     renderStartups(startups);
                     populateFilters(startups);
                 });
@@ -143,10 +153,6 @@
                 const headers = lines[0].split(',');
                 return lines.slice(1).map((line, index) => {
                     const values = line.split(',');
-                    // Skip empty rows
-                    if (values.some(value => value.trim() === '')) {
-                        return null;
-                    }
                     return {
                         id: index + 1,
                         Company: values[0],
@@ -156,7 +162,7 @@
                         Founded: values[4],
                         Description: values[5]
                     };
-                }).filter(entry => entry !== null); // Remove null entries
+                }).filter(startup => startup.Company); // Filter out empty rows
             }
 
             // Populate filter dropdowns
@@ -194,7 +200,7 @@
                     const startupElement = document.createElement('div');
                     startupElement.classList.add('startup');
                     startupElement.innerHTML = `
-                        <h3>${startup.id}. <a href="https://${startup.Website}" target="_blank">${startup.Company}</a></h3>
+                        <h3><a href="https://${startup.Website}" target="_blank">${startup.id}. ${startup.Company}</a></h3>
                         <p><strong>Technology:</strong> ${startup.Technology}</p>
                         <p><strong>Country:</strong> ${startup.Country}</p>
                         <p><strong>Founded:</strong> ${startup.Founded}</p>
@@ -226,6 +232,16 @@
 
                 renderStartups(filteredStartups);
             }
+
+            // Reset filters and return to original order
+            resetButton.addEventListener('click', function () {
+                searchBar.value = '';
+                technologyFilter.value = '';
+                countryFilter.value = '';
+                yearFilter.value = '';
+                sortFilter.value = 'desc';
+                renderStartups(originalStartups); // Restore original order
+            });
 
             // Event listeners for search, filter, and sort changes
             searchBar.addEventListener('input', applyFilters);
