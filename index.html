@@ -42,14 +42,25 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 0.5rem;
         }
 
-        .filters select, .filters button {
+        .filters select {
             padding: 0.5rem;
             border-radius: 5px;
             border: 1px solid #ccc;
             margin: 0 0.5rem;
+        }
+
+        .filters button {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+
+        .filters button:hover {
+            background-color: #e0e0e0;
         }
 
         #startups-list {
@@ -59,7 +70,6 @@
             background-color: white;
             border: 1px solid #ddd;
             padding: 1rem;
-            box-sizing: border-box;
         }
 
         .startup {
@@ -110,6 +120,7 @@
 
         <label for="sort-filter">Sort By Year:</label>
         <select id="sort-filter">
+            <option value="none">None</option>
             <option value="desc">Most Recent</option>
             <option value="asc">Oldest First</option>
         </select>
@@ -135,14 +146,14 @@
             const startupsList = document.getElementById('startups-list');
 
             let startups = [];
-            let originalStartups = [];
+            let originalOrder = [];
 
             // Fetch the CSV and parse it
             fetch(csvUrl)
                 .then(response => response.text())
                 .then(data => {
                     startups = parseCSV(data);
-                    originalStartups = [...startups]; // Keep a copy of the original order
+                    originalOrder = [...startups];
                     renderStartups(startups);
                     populateFilters(startups);
                 });
@@ -162,7 +173,7 @@
                         Founded: values[4],
                         Description: values[5]
                     };
-                }).filter(startup => startup.Company); // Filter out empty rows
+                });
             }
 
             // Populate filter dropdowns
@@ -200,7 +211,7 @@
                     const startupElement = document.createElement('div');
                     startupElement.classList.add('startup');
                     startupElement.innerHTML = `
-                        <h3><a href="https://${startup.Website}" target="_blank">${startup.id}. ${startup.Company}</a></h3>
+                        <h3>${startup.id}. <a href="https://${startup.Website}" target="_blank">${startup.Company}</a></h3>
                         <p><strong>Technology:</strong> ${startup.Technology}</p>
                         <p><strong>Country:</strong> ${startup.Country}</p>
                         <p><strong>Founded:</strong> ${startup.Founded}</p>
@@ -210,7 +221,7 @@
                 });
             }
 
-            // Search, filter, and sort the startups
+            // Apply filters and sort
             function applyFilters() {
                 const searchTerm = searchBar.value.toLowerCase();
                 const selectedTechnology = technologyFilter.value;
@@ -226,21 +237,23 @@
                     return matchesSearch && matchesTechnology && matchesCountry && matchesYear;
                 });
 
-                filteredStartups.sort((a, b) => {
-                    return sortDirection === 'asc' ? a.Founded - b.Founded : b.Founded - a.Founded;
-                });
+                if (sortDirection === 'asc') {
+                    filteredStartups.sort((a, b) => a.Founded - b.Founded);
+                } else if (sortDirection === 'desc') {
+                    filteredStartups.sort((a, b) => b.Founded - a.Founded);
+                }
 
                 renderStartups(filteredStartups);
             }
 
-            // Reset filters and return to original order
-            resetButton.addEventListener('click', function () {
+            // Reset all filters
+            resetButton.addEventListener('click', () => {
                 searchBar.value = '';
                 technologyFilter.value = '';
                 countryFilter.value = '';
                 yearFilter.value = '';
-                sortFilter.value = 'desc';
-                renderStartups(originalStartups); // Restore original order
+                sortFilter.value = 'none';
+                renderStartups(originalOrder);
             });
 
             // Event listeners for search, filter, and sort changes
